@@ -80,10 +80,6 @@ function SkillRow({ skill, index }) {
             }}
           />
         </div>
-        <span className="text-sm font-display text-white w-12 text-right tabular-nums">
-          {skill.level}
-          <span className="text-[#E6C229]">%</span>
-        </span>
       </div>
     </motion.div>
   );

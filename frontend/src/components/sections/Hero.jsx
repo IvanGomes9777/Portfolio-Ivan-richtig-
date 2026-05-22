@@ -71,7 +71,7 @@ export default function Hero() {
         >
           <span className="w-12 h-px bg-[#E6C229]" />
           <span className="text-xs uppercase tracking-[0.3em] text-[#D4C5B9]">
-            Portfolio · 2025
+            Portfolio · 2026
           </span>
         </motion.div>
 
