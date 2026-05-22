@@ -1,4 +1,4 @@
-from fastapi import FastAPI, APIRouter, HTTPException
+from fastapi import FastAPI, APIRouter, HTTPException, Header
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -164,7 +164,10 @@ async def submit_contact(payload: ContactCreate):
 
 
 @api_router.get("/contact", response_model=List[ContactMessage])
-async def list_contacts():
+async def list_contacts(x_admin_token: str | None = Header(default=None)):
+    admin_token = os.environ.get("ADMIN_TOKEN")
+    if not admin_token or x_admin_token != admin_token:
+        raise HTTPException(status_code=401, detail="Unauthorized")
     items = await db.contact_messages.find({}, {"_id": 0}).sort("created_at", -1).to_list(500)
     for item in items:
         if isinstance(item.get("created_at"), str):
