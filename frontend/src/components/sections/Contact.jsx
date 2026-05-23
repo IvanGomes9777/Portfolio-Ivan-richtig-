@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Send, Mail, ArrowUpRight, Loader2 } from "lucide-react";
-import axios from "axios";
 import { toast } from "sonner";
 
-const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
+const encode = (data) =>
+  Object.keys(data)
+    .map((k) => encodeURIComponent(k) + "=" + encodeURIComponent(data[k]))
+    .join("&");
 
 export default function Contact() {
   const [form, setForm] = useState({ name: "", email: "", message: "" });
@@ -29,25 +31,24 @@ export default function Contact() {
     if (!validate()) return;
     setSubmitting(true);
     try {
-      const res = await axios.post(`${API}/contact`, form);
-      if (res.data?.status === "success") {
+      const res = await fetch("/", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: encode({
+          "form-name": "contact",
+          "bot-field": "",
+          ...form,
+        }),
+      });
+      if (res.ok) {
         toast.success("Nachricht gesendet — ich melde mich bei dir!");
-        setSubmitted(true);
-        setForm({ name: "", email: "", message: "" });
-      } else if (res.data?.status === "saved_email_failed") {
-        toast.success(
-          "Deine Nachricht wurde gespeichert. Ivan meldet sich bei dir.",
-        );
         setSubmitted(true);
         setForm({ name: "", email: "", message: "" });
       } else {
         toast.error("Etwas ist schiefgelaufen. Bitte versuche es erneut.");
       }
     } catch (err) {
-      const msg =
-        err?.response?.data?.detail ||
-        "Etwas ist schiefgelaufen. Bitte versuche es erneut.";
-      toast.error(msg);
+      toast.error("Etwas ist schiefgelaufen. Bitte versuche es erneut.");
     } finally {
       setSubmitting(false);
     }
@@ -154,12 +155,26 @@ export default function Contact() {
               viewport={{ once: true }}
               transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
               onSubmit={onSubmit}
+              name="contact"
+              method="POST"
+              data-netlify="true"
+              data-netlify-honeypot="bot-field"
               className="glass rounded-2xl p-8 md:p-12 space-y-8"
               data-testid="contact-form"
               noValidate
             >
+              {/* Hidden Netlify fields */}
+              <input type="hidden" name="form-name" value="contact" />
+              <p className="hidden">
+                <label>
+                  Don't fill this out if you're human:{" "}
+                  <input name="bot-field" />
+                </label>
+              </p>
+
               <FormField
                 id="name"
+                name="name"
                 label="Wie ist dein Name?"
                 value={form.name}
                 onChange={(v) => setForm({ ...form, name: v })}
@@ -169,6 +184,7 @@ export default function Contact() {
               />
               <FormField
                 id="email"
+                name="email"
                 label="Deine E-Mail-Adresse"
                 type="email"
                 value={form.email}
@@ -179,6 +195,7 @@ export default function Contact() {
               />
               <FormField
                 id="message"
+                name="message"
                 label="Deine Nachricht"
                 type="textarea"
                 value={form.message}
@@ -221,6 +238,7 @@ export default function Contact() {
 
 function FormField({
   id,
+  name,
   label,
   type = "text",
   value,
@@ -240,6 +258,7 @@ function FormField({
       {type === "textarea" ? (
         <textarea
           id={id}
+          name={name}
           rows={5}
           value={value}
           onChange={(e) => onChange(e.target.value)}
@@ -252,6 +271,7 @@ function FormField({
       ) : (
         <input
           id={id}
+          name={name}
           type={type}
           value={value}
           onChange={(e) => onChange(e.target.value)}
